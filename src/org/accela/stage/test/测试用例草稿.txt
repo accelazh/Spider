@@ -1,0 +1,23 @@
+1. 测试Input(null)出错
+2. 测试100重IntTo2IntStage连接，无限制线程池，正常处理，正确产生数字结果
+3. 测试3重IntTo2IntStage连接，最后一环使用有限线程池，装满它，然后再装填更多任务，检查三个IntTo2IntStage分别的被拒绝次数
+4. 测试3重IntTo2IntStage连接，最后一环使用procFail，检查是否正确地捕获异常并断言
+5. 测试IntTo2IntStage-InputFailureStage(用outThree连接)，检查异常捕获和断言，
+6. 测试IntTo2IntStage-InputRejectedStage，检查rejectedCounter++
+7. 测试IntTo2IntStage-InputImplFailureStage，检查rejectedCounter++
+8. 测试IntTo2IntStage-InputImplRejectedStage，检查rejectedCounter++
+9. 测试preprocess方法抛出异常的情况下，检查rejectedCounter++
+10. 测试preprocess方法返回null的情况下，检查process没有执行
+
+11. 测试SchedulerStage，三个任务，延时分别是0，10，100，重试次数分别是100，10，0，嵌有Scheduler-
+FailureHandler，送入正常的IntTo2IntStage处理。检查三个任务应该都没有被重试过(检查retry数)，并且都
+被执行（检查runCount），SchedulerFailureHander没有被调用过。
+12. 测试环境同上，但是IntTo2IntStage先被塞满。检查重试次数(retry数，preprocessCount数)，没有任务
+被执行（runCount)，并且检查三个SchedulerHandler分别被调用过1次。
+13. 测试SchedulerStage，三个任务，延时分别是1，2，3，重试次数分别是100，10，0，嵌有Scheduler-
+FailureHandler，送入被塞满的IntTo2IntStage处理。在三个任务到达第一次尝试前，SchedulerStage先被塞满。
+检查三个任务应该都没有被重试过(检查retry数)，并且都没有，三个SchedulerFailureHander分别被调用过一次。
+这个测试由于ScheduledThreadPoolExecutor无法设定队列的大小，因此无法进行。
+
+16. 测试ScheduleStage中的记录task数量的方法
+15. 测试ConcurrentStage中的记录task数量的方法

@@ -1,0 +1,1 @@
+A web crawler (spider) to collect web pages on the internet. Respects robots.txt. Supports many features. Designed by concurrent pipeline and decorator + strategy mode. Built in my school time.

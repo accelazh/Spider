@@ -1,0 +1,72 @@
+-4. Constructing
+	input: URL
+	process: 这一步仅仅负责将URL构造成WebPage对象。这是为了方便外界使用时，不需要自行构造WebPage.
+			在C++中，这一步就是分配WebPage内存的阶段，后续的阶段都是在处理这一块内存。
+	output: WebPage
+
+-3. Normalization
+	input: WebPage
+	process: 将URL格式规范化。这一步必须是不需要IO资源的。这一步必须使用InstantStage。原因同Prefilter.
+	output: WebPage
+	
+-2.5. BeginningListener
+	input: WebPage
+	process: 用来设置监听器，告知外界一个URL任务的开始。放在NormalizationStage后，是为了保证在EndingListenerStage，
+			URL对应。
+	output: WebPage
+	
+-2. Prefilter
+	input: WebPage
+	process: 不需要IO资源，简单快速地过滤。比如根据URL后缀名的过滤。这一步必须使用InstantStage，因为
+			它既不需要并行，并且这一步放在ScheduleStage前面，没有人来处理比如线程池队列排满这类线程池
+			负载调节问题。
+	output: WebPage
+
+-1. Scheduling
+	input: WebPage
+	process: 可以加装各种URLScheduler，用来控制输入的任务延时多长时间后才被输出。其中最重要的之一是
+			用来控制负载的URLScheduler（LoadURLScheduler），还有用来强制要求任务输入的时间间隔不小
+			于某一值的URLScheduler（TaskIntervalURLScheduler），还有可以控制对同一网站的过度访问
+			的URLScheduler(PolitenessURLScheduler)。
+			内部隐藏了一个org.accela.stage.SchedulerStage，延迟任务发送的工作是由它实现的。
+	output: WebPage
+0. Filter
+	input: WebPage
+	process: 一些复杂的，或者需要IO访问比如数据库的URL过滤功能。例如根据这个URL上次被sprider访问的日期
+			决定这次这次是否不应该再次访问了。
+	output: WebPage
+
+2. FetchingContent.
+	input: WebPage
+	process：根据url得到网页的文本内容
+	output: WebPage{WebPage{URL, Content, subURLs=null, Analysis=null, Date=null}
+3. ExtractingHyperlink.
+	input: WebPage
+	process：从得到的文本中获取下一层URL
+	output: WebPage{WebPage{URL, Content, subURLs, Analysis=null, Date=null}
+4. Analyzing
+	input: WebPage
+	process：简单地分析网页（Sprider的用意是收集网页信息，而建立网页排名等复杂的分析工作，应该由另一种在后台运行、
+			使用数据库的程序负责。所以这里的分析仅仅是简单的，仅涉及单个网页的分析，比如建立网页文本的标签树，
+			分析图像资源等等。）
+	output: WebPage{WebPage{URL, Content, subURLs, Analysis, Date=null}
+5. Stamping
+	input: WebPage
+	process：记录当前时间。其实就是记录了最近一次该网页被Sprider刷新的时间
+	output: WebPage{WebPage{URL, Content, subURLs, Analysis, Date}
+6. Recursion
+	input WebPage
+	process: 把subURL重新发送给第一步(BeginningStage)。 
+			要考虑的问题1. 和parent相同的url 2. 重复的子链接 3. 递归层数 4. 网页总数 5. 外网链接限制
+	output：WebPage (unmodified)
+	
+6.5. EndingListener
+	input: WebPage
+	process: 比如安装监听器，告知外界一个URL任务处理的结束
+	output: WebPage
+	
+7. Delivering
+	input WebPage
+	process: 
+	output: URL
+	这一步将输入的数据移交给其它模块，比如进行持久化。为了避免数据所有权的模糊（C++里通过这个管理释放内存），只能给下一阶段传递URL而不是WebPage

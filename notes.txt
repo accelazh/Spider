@@ -1,0 +1,1 @@
+1. 这个版本在URLTextDownloader中增加了根据URLConnection链接的contentType中的charset属性，自动解析文本编码的功能。
